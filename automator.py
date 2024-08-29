@@ -8,8 +8,10 @@ from selenium.webdriver.common.by import By
 from webdriver_manager.chrome import ChromeDriverManager
 from time import sleep
 from urllib.parse import quote
+
 import os
 import sys
+import csv
 
 options = Options()
 options.add_experimental_option("excludeSwitches", ["enable-logging"])
@@ -42,41 +44,42 @@ print("*****                                               ******")
 print("*****  THANK YOU FOR USING WHATSAPP BULK MESSENGER  ******")
 print("*****      This tool was built by Anirudh Bagri     ******")
 print("*****           www.github.com/anirudhbagri         ******")
-print("*****            Enhanced by Ricardo J. Nunes          ******")
+print("*****           Enhanced by Ricardo J. Nunes        ******")
 print("*****          www.github.com/ricardo-jnunes        ******")
 print("**********************************************************")
 print("**********************************************************")
 print(style.RESET)
 
-f = open("message.txt", "r", encoding="utf8")
-message = f.read()
+f = open("message.txt", "r", encoding="iso-8859-1")
+original_message = f.read()
 f.close()
 
 print(style.YELLOW + '\nThis is your message-')
-print(style.GREEN + message)
+print(style.GREEN + original_message)
 print("\n" + style.RESET)
-message = quote(message)
 
-numbers = []
-f = open("numbers.txt", "r")
-for line in f.read().splitlines():
-	if line.strip() != "":
-		numbers.append(line.strip())
-f.close()
-total_number=len(numbers)
-print(style.RED + 'We found ' + str(total_number) + ' numbers in the file' + style.RESET)
+dict = {}
+line_count = 0
+with open('numbers.txt') as csv_file:
+    csv_reader = csv.reader(csv_file, delimiter=';')
+    for row in csv_reader:
+        message = original_message.replace("{...}",row[0].strip())
+        dict[row[1].strip()] = quote(message)
+        print(style.CYAN + 'Personalizing message for: ' + row[0].strip()  + ' number: ' + row[1].strip() + style.RESET)
+        line_count += 1
+
+print(style.RED + 'We found ' + str(line_count) + ' numbers in the file' + style.RESET)
+
 delay = 30
-
-# driver = webdriver.Chrome(ChromeDriverManager().install(), options=options)
 driver = webdriver.Chrome( service=ChromeService(ChromeDriverManager().install()), options=options )
 print('Once your browser opens up sign in to web whatsapp')
 driver.get('https://web.whatsapp.com')
 input(style.MAGENTA + "AFTER logging into Whatsapp Web is complete and your chats are visible, press ENTER..." + style.RESET)
-for idx, number in enumerate(numbers):
+for idx, (number, message) in enumerate(dict.items()):
 	number = number.strip()
 	if number == "":
 		continue
-	print(style.YELLOW + '{}/{} => Sending message to {}.'.format((idx+1), total_number, number) + style.RESET)
+	print(style.YELLOW + '{}/{} => Sending message to {}.'.format((idx+1), line_count, number) + style.RESET)
 	try:
 		url = 'https://web.whatsapp.com/send?phone=' + number + '&text=' + message
 		sent = False
